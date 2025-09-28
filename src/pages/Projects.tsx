@@ -152,7 +152,7 @@ const Projects = () => {
       location: 'Aurangabad, Maharashtra',
       completionDate: 'Dec 2023',
       type: 'Industrial',
-      image: '/placeholder.svg',
+      image: '/photos/aunranbad.jpg',
       client: 'Tata Steel Limited'
     },
     {
@@ -161,7 +161,7 @@ const Projects = () => {
       location: 'Kolhapur, Maharashtra',
       completionDate: 'Nov 2023',
       type: 'Commercial',
-      image: '/placeholder.svg',
+      image: '/photos/kolhapur.jpg',
       client: 'Phoenix Mills Limited'
     },
     {
@@ -170,7 +170,7 @@ const Projects = () => {
       location: 'Nagpur, Maharashtra',
       completionDate: 'Oct 2023',
       type: 'Commercial',
-      image: '/placeholder.svg',
+      image: '/photos/nagpur.jpg',
       client: 'Infosys Technologies'
     },
     {
@@ -179,7 +179,7 @@ const Projects = () => {
       location: 'Solapur, Maharashtra',
       completionDate: 'Sep 2023',
       type: 'Residential',
-      image: '/placeholder.svg',
+      image: '/photos/solapur.jpg',
       client: 'Mahindra Lifespace'
     }
   ];
@@ -373,21 +373,23 @@ const Projects = () => {
 
       {/* Project Status CTA */}
       <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-15 space-y-6">
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Track Your Project Status
           </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Are you our client? Login to your project portal to get real-time updates 
             on your project's progress.
           </p>
-          <Button 
-            size="lg" 
-            className="hero-gradient"
-            onClick={() => navigate('/contact')}
-          >
-            Client Portal Login
-          </Button>
+          {/*
+            <Button 
+              size="lg" 
+              className="hero-gradient"
+              onClick={() => navigate('/contact')}
+            >
+              Client Portal Login
+            </Button>
+          */}
         </div>
       </section>
 

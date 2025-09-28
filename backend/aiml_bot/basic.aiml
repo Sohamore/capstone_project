@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiml version="1.0.1" encoding="UTF-8">
+  <category>
+    <pattern>HELLO</pattern>
+    <template>Hi there! How can I assist you today?</template>
+  </category>
+
+  <category>
+    <pattern>HI</pattern>
+    <template>Hello! What can I help you with?</template>
+  </category>
+
+  <category>
+    <pattern>WHAT IS YOUR NAME</pattern>
+    <template>I am ShreeBot, your project assistant.</template>
+  </category>
+
+  <category>
+    <pattern>WHO ARE YOU</pattern>
+    <template>I am ShreeBot, here to help you with project updates and queries.</template>
+  </category>
+
+  <category>
+    <pattern>BYE</pattern>
+    <template>Goodbye! Have a great day.</template>
+  </category>
+
+  <category>
+    <pattern>*</pattern>
+    <template>I'm not sure about that — could you rephrase?</template>
+  </category>
+</aiml>

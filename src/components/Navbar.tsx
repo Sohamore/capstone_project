@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Search, Phone } from 'lucide-react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -60,6 +61,14 @@ const Navbar = () => {
               <Phone className="h-4 w-4 mr-2" />
               +91 9226133650
             </Button>
+            {/* Client Portal Login button placed beside the phone number */}
+            <Button
+              size="sm"
+              className="hero-gradient"
+              onClick={() => navigate('/auth')}
+            >
+              Client Portal Login
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -95,10 +104,13 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
-            <div className="pt-3 border-t border-border">
+            <div className="pt-3 border-t border-border space-y-2">
               <Button variant="default" size="sm" className="hero-gradient w-full">
                 <Phone className="h-4 w-4 mr-2" />
                 +91 9226133650
+              </Button>
+              <Button size="sm" className="hero-gradient w-full" onClick={() => navigate('/auth')}>
+                Client Portal Login
               </Button>
             </div>
           </div>

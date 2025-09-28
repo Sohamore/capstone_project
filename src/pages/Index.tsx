@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/ProductCard';
 import { ArrowRight, Award, Shield, Clock, Users, Star, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ChatBot from '@/components/ChatBot';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -177,6 +178,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+      <ChatBot />
     </Layout>
   );
 };
