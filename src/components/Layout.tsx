@@ -20,7 +20,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
             {/* Column 1: Logo & Description */}
             <div className="flex flex-col">
-              <h3 className="text-2xl font-bold text-white mb-4">Shree Krishna Steel Works</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">Shri krishna steel works</h3>
               <p className="text-sm">
                 Crafting excellence in steel fabrication. From structural beams to custom gates, 
                 we deliver durable and reliable solutions for your project needs.
@@ -64,7 +64,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
           
           <div className="mt-12 pt-8 border-t border-gray-700 text-center text-sm">
-            <p>&copy; {new Date().getFullYear()} Shree Krishna Steel Works. All Rights Reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Shri krishna steel works. All Rights Reserved.</p>
           </div>
         </div>
       </footer>

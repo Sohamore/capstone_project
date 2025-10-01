@@ -179,7 +179,7 @@ const Contact = () => {
                       allowFullScreen
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
-                      title="Shree Krishna Steel Works Location"
+                      title="Shri krishna steel works Location"
                       className="rounded-lg border-0"
                     ></iframe>
                   </div>

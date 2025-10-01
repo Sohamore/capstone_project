@@ -37,18 +37,18 @@ const About = () => {
             <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center mr-4">
               <img 
                 src="/photos/logo.jpg" 
-                alt="Shree Krishna Steel Works Logo" 
+                alt="Shri krishna steel works Logo" 
                 className="w-full h-full object-cover"
               />
             </div>
             <Badge variant="secondary" className="bg-background/20 text-primary-foreground border-primary-foreground/20">
-              About Shree Krishna Steel Works
+              About Shri krishna steel works
             </Badge>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
             Crafting Steel Excellence
             <br />
-            <span className="text-gradient">Since Decades</span>
+            <span className="text-white">Since Decades</span>
           </h1>
           <p className="text-xl text-primary-foreground/90 max-w-3xl mx-auto">
             From humble beginnings to becoming Maharashtra's trusted steel fabrication partner, 
@@ -64,7 +64,7 @@ const About = () => {
             <div>
               <h2 className="text-3xl font-bold text-foreground mb-6">Our Story</h2>
               <p className="text-lg text-muted-foreground mb-6">
-                ShreeKrishnaSteelWorks was founded with a vision to provide premium steel fabrication 
+                Shri krishna steel works was founded with a vision to provide premium steel fabrication 
                 services across Maharashtra. What started as a small workshop has grown into a 
                 leading steel fabrication company, trusted by hundreds of clients.
               </p>
@@ -83,7 +83,7 @@ const About = () => {
               <div className="aspect-[3/4] rounded-lg shadow-medium overflow-hidden min-h-[500px]">
                 <img 
                   src="/photos/logo.jpg" 
-                  alt="Shree Krishna Steel Works Logo" 
+                  alt="Shri krishna steel works Logo" 
                   className="w-full h-full object-cover"
                 />
               </div>

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Search, Phone, LogOut } from 'lucide-react';
+import { Menu, X, Search, Phone, LogOut, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { getCartItemCount } = useCart();
 
   const handleLogout = async () => {
     try {
@@ -38,12 +40,12 @@ const Navbar = () => {
             <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
               <img 
                 src="/photos/logo.jpg" 
-                alt="Shree Krishna Steel Works Logo" 
+                alt="Shri krishna steel works Logo" 
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-lg font-bold text-primary">Shree Krishna Steel Works</h1>
+              <h1 className="text-lg font-bold text-primary">Shri krishna steel works</h1>
               <p className="text-xs text-steel-accent">Premium Steel Fabrication</p>
             </div>
           </div>
@@ -54,11 +56,12 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-medium transition-all duration-300 hover:text-primary relative group ${
                   isActive(item.href) ? 'text-primary' : 'text-foreground'
                 }`}
               >
                 {item.name}
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </Link>
             ))}
           </div>
@@ -67,6 +70,19 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="ghost" size="sm">
               <Search className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/cart')}
+              className="relative"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {getCartItemCount() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {getCartItemCount()}
+                </span>
+              )}
             </Button>
             <Button variant="default" size="sm" className="hero-gradient">
               <Phone className="h-4 w-4 mr-2" />
@@ -119,12 +135,13 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`block px-3 py-2 text-base font-medium transition-colors hover:text-primary ${
+                className={`block px-3 py-2 text-base font-medium transition-all duration-300 hover:text-primary relative group ${
                   isActive(item.href) ? 'text-primary bg-secondary' : 'text-foreground'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.name}
+                <span className="absolute bottom-1 left-3 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-[calc(100%-1.5rem)]"></span>
               </Link>
             ))}
             <div className="pt-3 border-t border-border space-y-2">
