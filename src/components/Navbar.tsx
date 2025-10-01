@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Search, Phone } from 'lucide-react';
+import { Menu, X, Search, Phone, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -61,14 +72,26 @@ const Navbar = () => {
               <Phone className="h-4 w-4 mr-2" />
               +91 9226133650
             </Button>
-            {/* Client Portal Login button placed beside the phone number */}
-            <Button
-              size="sm"
-              className="hero-gradient"
-              onClick={() => navigate('/auth')}
-            >
-              Client Portal Login
-            </Button>
+            {/* Client Portal Login/Logout button placed beside the phone number */}
+            {user ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleLogout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="hero-gradient"
+                onClick={() => navigate('/auth')}
+              >
+                Login
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -109,9 +132,21 @@ const Navbar = () => {
                 <Phone className="h-4 w-4 mr-2" />
                 +91 9226133650
               </Button>
-              <Button size="sm" className="hero-gradient w-full" onClick={() => navigate('/auth')}>
-                Client Portal Login
-              </Button>
+              {user ? (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              ) : (
+                <Button size="sm" className="hero-gradient w-full" onClick={() => navigate('/auth')}>
+                  Login
+                </Button>
+              )}
             </div>
           </div>
         </div>
