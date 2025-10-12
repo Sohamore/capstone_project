@@ -40,3 +40,15 @@
 .read-the-docs {
   color: #888;
 }
+
+/* ChatBot styles */
+.chatbot-floating-button {
+  position: fixed;
+  z-index: 9999;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.chatbot-panel {
+  position: fixed;
+  z-index: 10000;
+}

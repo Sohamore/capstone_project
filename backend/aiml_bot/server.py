@@ -1,10 +1,15 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import aiml
 import os
 
 app = Flask(__name__)
-CORS(app)
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    return response
 
 BRN = os.path.join(os.path.dirname(__file__), 'bot_brain.brn')
 AIML_DIR = os.path.join(os.path.dirname(__file__), '')

@@ -18,13 +18,15 @@ const ChatBot: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
-  const [pos, setPos] = useState<{ x: number; y: number }>({ x: window.innerWidth - 90, y: window.innerHeight - 180 });
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: window.innerWidth - 80, y: window.innerHeight - 200 });
   const [isVisible, setIsVisible] = useState(true);
   const [sending, setSending] = useState(false);
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
   const idRef = useRef(1);
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const floatingButtonRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   // load position & history
   useEffect(() => {
@@ -78,6 +80,23 @@ const ChatBot: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(CHAT_POS_KEY, JSON.stringify(pos));
   }, [pos]);
+
+  // Update positioning when pos changes
+  useEffect(() => {
+    if (floatingButtonRef.current) {
+      floatingButtonRef.current.style.left = `${pos.x}px`;
+      floatingButtonRef.current.style.top = `${pos.y}px`;
+    }
+  }, [pos]);
+
+  // Update panel positioning when open state changes
+  useEffect(() => {
+    if (panelRef.current && open) {
+      const panelStyle = computePanelStyle();
+      panelRef.current.style.left = `${panelStyle.left}px`;
+      panelRef.current.style.top = `${panelStyle.top}px`;
+    }
+  }, [open, pos]);
 
   // auto-scroll when messages change
   useEffect(() => {
@@ -299,14 +318,8 @@ const ChatBot: React.FC = () => {
         <div
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
-          style={{ 
-            position: 'fixed', 
-            left: pos.x, 
-            top: pos.y, 
-            zIndex: 9999,
-            transition: 'opacity 0.3s ease-in-out'
-          }}
-          className="chatbot-button"
+          className="chatbot-floating-button chatbot-button"
+          ref={floatingButtonRef}
         >
           <div className="w-14 h-14 rounded-full bg-white border-2 border-primary flex items-center justify-center shadow-lg cursor-move relative overflow-hidden">
             <img 
@@ -333,11 +346,10 @@ const ChatBot: React.FC = () => {
 
       {/* Chat panel positioned relative to the icon */}
       {open && (
-        <div style={{ 
-          position: 'fixed', 
-          zIndex: 10000, 
-          ...computePanelStyle() 
-        } as React.CSSProperties}>
+        <div 
+          className="chatbot-panel" 
+          ref={panelRef}
+        >
           <div className="w-80 bg-background rounded-lg shadow-lg p-3 chat-panel">
             <div className="flex items-center justify-between mb-2">
               <div className="font-semibold">Shri krishna steel works AI</div>
