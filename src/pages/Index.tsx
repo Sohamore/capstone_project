@@ -35,6 +35,14 @@ const Index = () => {
       category: 'Custom',
       price: 'Quote on Request'
     }
+      ,
+      {
+        name: 'Industrial Platforms',
+        description: 'Heavy-duty platforms and mezzanine structures for industrial use.',
+        image: '/photos/WhatsApp Image 2025-09-02 at 23.38.52_4a38bb6a.jpg',
+        category: 'Industrial',
+        price: '₹380/sq ft'
+      }
   ];
 
   return (
@@ -86,7 +94,7 @@ const Index = () => {
           </div>
 
           <div className="text-center">
-            <Button variant="outline" size="lg" className="group">
+            <Button variant="outline" size="lg" className="group" onClick={() => navigate('/products')}>
               View All Products
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
