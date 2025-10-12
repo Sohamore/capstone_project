@@ -12,15 +12,31 @@ import {
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 const Auth = () => {
   const navigate = useNavigate();
   const authContext = useAuth(); // use context
+  const { toast } = useToast();
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
+  const [unverifiedCredentials, setUnverifiedCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const upsertUserInFirestore = async (user, name) => {
     await setDoc(
@@ -36,7 +52,7 @@ const Auth = () => {
     );
   };
 
-  const handleLoginSuccess = (user, name) => {
+  const handleLoginSuccess = (user, name, options: { delay?: number } = {}) => {
     const userData = {
       uid: user.uid,
       displayName: name,
@@ -45,7 +61,22 @@ const Auth = () => {
     };
     // persist user locally; do not assume context exposes setCurrentUser
     localStorage.setItem('user', JSON.stringify(userData));
-    navigate('/'); // redirect to home
+    // navigate to home immediately
+    navigate('/', { replace: true });
+    // show modal and toast informing success
+    setShowSuccessModal(true);
+    toast({
+      title: 'Signed in successfully',
+      description: 'Welcome back.',
+      action: (
+        <ToastAction altText="Go to dashboard" onClick={() => {
+          // navigate to dashboard when user clicks action
+          navigate('/dashboard');
+        }}>
+          Go to dashboard
+        </ToastAction>
+      ),
+    });
   };
 
   const handleGoogleSignIn = async () => {
@@ -54,10 +85,16 @@ const Auth = () => {
       const result = await signInWithPopup(auth, googleProvider || new GoogleAuthProvider());
       const user = result.user;
       const nameToStore = user.displayName || user.email;
-      await upsertUserInFirestore(user, nameToStore);
-      handleLoginSuccess(user, nameToStore);
+  await upsertUserInFirestore(user, nameToStore);
+  // redirect to home immediately after Google sign-in
+  handleLoginSuccess(user, nameToStore, { delay: 0 });
     } catch (err) {
-      alert(`Google sign-in failed: ${err.message}`);
+      // show more detailed error info for debugging
+      // eslint-disable-next-line no-console
+      console.error('Google sign-in failed', err);
+      const code = err?.code || 'unknown_error';
+      const message = err?.message || 'An error occurred during Google sign-in.';
+      toast({ title: 'Google sign-in failed', description: `${code}: ${message}` });
     } finally {
       setLoading(false);
     }
@@ -74,10 +111,16 @@ const Auth = () => {
       await sendEmailVerification(user);
       const nameToStore = displayName || user.email;
       await upsertUserInFirestore(user, nameToStore);
-      handleLoginSuccess(user, nameToStore);
+      // Don't auto-login/redirect — require email verification first
+      setInfoMessage({ type: 'success', text: 'Verification email sent. Please check your inbox and verify your email before signing in.' });
+      setMode('login');
     } catch (err) {
-      if (err.code === 'auth/email-already-in-use') setMode('login');
-      alert(err.message);
+      // eslint-disable-next-line no-console
+      console.error('Email sign-up failed', err);
+      const code = err?.code || 'unknown_error';
+      const message = err?.message || 'Failed to create account.';
+      if (code === 'auth/email-already-in-use') setMode('login');
+      toast({ title: 'Sign up failed', description: `${code}: ${message}` });
     } finally {
       setLoading(false);
     }
@@ -90,14 +133,43 @@ const Auth = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      if (!user.emailVerified) return alert('Please verify your email first.');
+      if (!user.emailVerified) {
+        // store credentials temporarily so we can resend verification
+        setUnverifiedCredentials({ email, password });
+        setInfoMessage({ type: 'error', text: 'Your email is not verified. Please verify your email. You can resend the verification email.' });
+        return;
+      }
       const nameToStore = user.displayName || user.email;
       await upsertUserInFirestore(user, nameToStore);
       handleLoginSuccess(user, nameToStore);
     } catch (err) {
-      alert(err.message);
+      // eslint-disable-next-line no-console
+      console.error('Email sign-in failed', err);
+      const code = err?.code || 'unknown_error';
+      const message = err?.message || 'Failed to sign in.';
+      toast({ title: 'Sign in failed', description: `${code}: ${message}` });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedCredentials) return;
+    setResendLoading(true);
+    try {
+      // sign in again to obtain user object and resend verification
+      const cred = await signInWithEmailAndPassword(auth, unverifiedCredentials.email, unverifiedCredentials.password);
+      await sendEmailVerification(cred.user);
+      setInfoMessage({ type: 'success', text: 'Verification email resent. Please check your inbox.' });
+      // optionally clear stored credentials
+      setUnverifiedCredentials(null);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Resend verification failed', err);
+      const message = err?.message || 'Failed to resend verification email.';
+      setInfoMessage({ type: 'error', text: message });
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -141,6 +213,22 @@ const Auth = () => {
             </Button>
           </form>
 
+          {infoMessage && (
+            <div className={`mb-4 text-sm p-3 rounded ${infoMessage.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+              {infoMessage.text}
+            </div>
+          )}
+
+          {unverifiedCredentials && (
+            <div className="mb-4">
+              <div className="text-sm text-muted-foreground mb-2">Didn't receive the email?</div>
+              <div className="flex gap-2">
+                <Button onClick={handleResendVerification} disabled={resendLoading} className="hero-gradient">{resendLoading ? 'Sending...' : 'Resend Verification'}</Button>
+                <Button onClick={() => setUnverifiedCredentials(null)} variant="ghost">Cancel</Button>
+              </div>
+            </div>
+          )}
+
           <div className="text-sm mt-2">
             {mode === 'login' ? (
               <>
@@ -164,8 +252,22 @@ const Auth = () => {
           <Button onClick={handleGoogleSignIn} disabled={loading} className="w-full py-3">
             Continue with Google
           </Button>
-        </div>
-      </section>
+            </div>
+          </section>
+
+          {/* Success dialog shown briefly after sign-in */}
+          <Dialog open={showSuccessModal} onOpenChange={(open) => setShowSuccessModal(open)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Signed in</DialogTitle>
+                <DialogDescription>You've signed in successfully. Welcome back!</DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button onClick={() => { setShowSuccessModal(false); navigate('/dashboard'); }} className="hero-gradient">Go to dashboard</Button>
+                <Button variant="ghost" onClick={() => setShowSuccessModal(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
     </Layout>
   );
 };
