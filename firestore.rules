@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Orders - users can create orders and read their own orders
+    match /orders/{orderId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || request.auth.uid == resource.data.userId);
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Contact forms - authenticated users can create contact forms
+    match /contacts/{contactId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null; // Only authenticated users can read
+    }
+    
+    // Products - anyone can read products (for public catalog)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false; // Only admin can write products
+    }
+    
+    // Admin collections - only admin users can access
+    match /admin/{document=**} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.admin == true;
+    }
+    
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

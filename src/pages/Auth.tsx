@@ -61,21 +61,14 @@ const Auth = () => {
     };
     // persist user locally; do not assume context exposes setCurrentUser
     localStorage.setItem('user', JSON.stringify(userData));
-    // navigate to home immediately
-    navigate('/', { replace: true });
-    // show modal and toast informing success
+    // reset loading state
+    setLoading(false);
+    // show success modal first
     setShowSuccessModal(true);
+    // show toast notification
     toast({
-      title: 'Signed in successfully',
-      description: 'Welcome back.',
-      action: (
-        <ToastAction altText="Go to dashboard" onClick={() => {
-          // navigate to dashboard when user clicks action
-          navigate('/dashboard');
-        }}>
-          Go to dashboard
-        </ToastAction>
-      ),
+      title: 'Login Successful!',
+      description: 'Welcome to Shri Krishna Steel Works!',
     });
   };
 
@@ -85,9 +78,9 @@ const Auth = () => {
       const result = await signInWithPopup(auth, googleProvider || new GoogleAuthProvider());
       const user = result.user;
       const nameToStore = user.displayName || user.email;
-  await upsertUserInFirestore(user, nameToStore);
-  // redirect to home immediately after Google sign-in
-  handleLoginSuccess(user, nameToStore, { delay: 0 });
+      await upsertUserInFirestore(user, nameToStore);
+      // redirect to home immediately after Google sign-in
+      handleLoginSuccess(user, nameToStore, { delay: 0 });
     } catch (err) {
       // show more detailed error info for debugging
       // eslint-disable-next-line no-console
@@ -95,7 +88,7 @@ const Auth = () => {
       const code = err?.code || 'unknown_error';
       const message = err?.message || 'An error occurred during Google sign-in.';
       toast({ title: 'Google sign-in failed', description: `${code}: ${message}` });
-    } finally {
+      // reset loading state on error
       setLoading(false);
     }
   };
@@ -137,6 +130,7 @@ const Auth = () => {
         // store credentials temporarily so we can resend verification
         setUnverifiedCredentials({ email, password });
         setInfoMessage({ type: 'error', text: 'Your email is not verified. Please verify your email. You can resend the verification email.' });
+        setLoading(false); // reset loading state
         return;
       }
       const nameToStore = user.displayName || user.email;
@@ -255,16 +249,37 @@ const Auth = () => {
             </div>
           </section>
 
-          {/* Success dialog shown briefly after sign-in */}
+          {/* Success dialog shown after successful login */}
           <Dialog open={showSuccessModal} onOpenChange={(open) => setShowSuccessModal(open)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Signed in</DialogTitle>
-                <DialogDescription>You've signed in successfully. Welcome back!</DialogDescription>
+            <DialogContent className="max-w-md mx-auto">
+              <DialogHeader className="text-center">
+                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <DialogTitle className="text-2xl font-bold text-green-600">Login Successful!</DialogTitle>
+                <DialogDescription className="text-gray-600">
+                  Welcome to Shri Krishna Steel Works! You have successfully logged in with Google.
+                </DialogDescription>
               </DialogHeader>
-              <DialogFooter>
-                <Button onClick={() => { setShowSuccessModal(false); navigate('/dashboard'); }} className="hero-gradient">Go to dashboard</Button>
-                <Button variant="ghost" onClick={() => setShowSuccessModal(false)}>Close</Button>
+              <DialogFooter className="flex-col gap-3 sm:flex-row">
+                <Button 
+                  onClick={() => { 
+                    setShowSuccessModal(false); 
+                    navigate('/', { replace: true }); 
+                  }} 
+                  className="w-full hero-gradient"
+                >
+                  Go to Home Page
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full"
+                >
+                  Stay Here
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
