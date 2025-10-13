@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, Trash2, X } from 'lucide-react';
+import { Send, Trash2, X, Bot, User } from 'lucide-react';
 
-const CHAT_POS_KEY = 'chatbot_position_v1';
-const CHAT_HISTORY_KEY = 'chatbot_history_v1';
+const CHAT_HISTORY_KEY = 'chatbot_history_v2';
 
 type Message = {
   id: number;
@@ -18,24 +17,15 @@ const ChatBot: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
-  const [pos, setPos] = useState<{ x: number; y: number }>({ x: window.innerWidth - 80, y: window.innerHeight - 200 });
-  const [isVisible, setIsVisible] = useState(true);
   const [sending, setSending] = useState(false);
-  const dragging = useRef(false);
-  const offset = useRef({ x: 0, y: 0 });
   const idRef = useRef(1);
   const messagesRef = useRef<HTMLDivElement | null>(null);
-  const floatingButtonRef = useRef<HTMLDivElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // load position & history
+  // OpenAI API configuration
+  const OPENAI_API_KEY = "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";
+
+  // Load chat history
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CHAT_POS_KEY);
-      if (raw) setPos(JSON.parse(raw));
-    } catch (e) {
-      console.warn('Failed to load chat position from localStorage', e);
-    }
     try {
       const raw = localStorage.getItem(CHAT_HISTORY_KEY);
       if (raw) {
@@ -46,131 +36,27 @@ const ChatBot: React.FC = () => {
     } catch (e) {
       console.warn('Failed to load chat history', e);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep chatbot visible on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsVisible(true);
-    };
-
-    const handleResize = () => {
-      // Adjust position on window resize to keep it in view
-      setPos(prev => ({
-        x: Math.min(prev.x, window.innerWidth - 80),
-        y: Math.min(prev.y, window.innerHeight - 80)
-      }));
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  // save history and position
+  // Save chat history
   useEffect(() => {
     localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
   }, [messages]);
 
-  useEffect(() => {
-    localStorage.setItem(CHAT_POS_KEY, JSON.stringify(pos));
-  }, [pos]);
-
-  // Update positioning when pos changes
-  useEffect(() => {
-    if (floatingButtonRef.current) {
-      floatingButtonRef.current.style.left = `${pos.x}px`;
-      floatingButtonRef.current.style.top = `${pos.y}px`;
-    }
-  }, [pos]);
-
-  // Update panel positioning when open state changes
-  useEffect(() => {
-    if (panelRef.current && open) {
-      const panelStyle = computePanelStyle();
-      panelRef.current.style.left = `${panelStyle.left}px`;
-      panelRef.current.style.top = `${panelStyle.top}px`;
-    }
-  }, [open, pos]);
-
-  // auto-scroll when messages change
+  // Auto-scroll when messages change
   useEffect(() => {
     if (messagesRef.current) {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
   }, [messages, open]);
 
-  // greeting when opening
+  // Greeting when opening
   useEffect(() => {
     if (open && messages.length === 0) {
-      addBotMessage('Hello! I am Shri krishna steel works AI Assistant, powered by Google Gemini. I can help you with information about our steel products, services, and answer any questions you may have. How can I assist you today?');
+      addBotMessage('Hello! I am Shri Krishna Steel Works AI Assistant, powered by OpenAI. I can help you with information about our steel products, services, and answer any questions you may have. How can I assist you today?');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const startDrag = (clientX: number, clientY: number) => {
-    dragging.current = true;
-    offset.current = { x: clientX - pos.x, y: clientY - pos.y };
-    // Prevent text selection during drag
-    document.body.style.userSelect = 'none';
-  };
-
-  const onMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    startDrag(e.clientX, e.clientY);
-  };
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const t = e.touches[0];
-    startDrag(t.clientX, t.clientY);
-  };
-
-  useEffect(() => {
-    const onMove = (clientX: number, clientY: number) => {
-      if (!dragging.current) return;
-      const nx = clientX - offset.current.x;
-      const ny = clientY - offset.current.y;
-      // Keep chatbot within viewport bounds
-      setPos({ 
-        x: Math.max(8, Math.min(window.innerWidth - 80, nx)), 
-        y: Math.max(8, Math.min(window.innerHeight - 80, ny)) 
-      });
-    };
-    const onMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
-    const onTouchMove = (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (t) onMove(t.clientX, t.clientY);
-    };
-    const onUp = () => {
-      if (dragging.current) {
-        dragging.current = false;
-        // Restore text selection
-        document.body.style.userSelect = '';
-        localStorage.setItem(CHAT_POS_KEY, JSON.stringify(pos));
-      }
-    };
-
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('touchmove', onTouchMove);
-    window.addEventListener('mouseup', onUp);
-    window.addEventListener('touchend', onUp);
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('mouseup', onUp);
-      window.removeEventListener('touchend', onUp);
-      // Ensure userSelect is restored on cleanup
-      document.body.style.userSelect = '';
-    };
-  }, [pos]);
 
   const addUserMessage = (txt: string) => {
     const msg: Message = { id: idRef.current++, from: 'user', text: txt, time: new Date().toISOString() };
@@ -189,26 +75,30 @@ const ChatBot: React.FC = () => {
     setText('');
     setSending(true);
 
-    // add a pending typing indicator
     const pendingId = idRef.current;
-    addBotMessage('...', true);
+    addBotMessage('Thinking...', true);
 
     try {
-      // Use a CORS proxy to avoid CORS issues
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
-      const apiUrl = encodeURIComponent(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyDUzWFFnyyepSkhXDIHQmCKaHaGpO5DRzs`);
-      
-      const response = await fetch(proxyUrl + apiUrl, {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `You are a helpful assistant for Shri krishna steel works, a steel fabrication company. Please provide helpful and professional responses about steel products, services, and general inquiries. Keep responses concise and relevant to steel fabrication business. User message: ${msgText}`
-            }]
-          }]
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful AI assistant for Shri Krishna Steel Works, a steel fabrication company. Provide helpful and professional responses about steel products, services, and general inquiries. Keep responses concise and relevant to steel fabrication business. Always be polite and helpful.'
+            },
+            {
+              role: 'user',
+              content: msgText
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
         }),
       });
 
@@ -217,13 +107,11 @@ const ChatBot: React.FC = () => {
       }
 
       const data = await response.json();
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I didn't understand that. Please try again.";
+      const reply = data.choices?.[0]?.message?.content || "I didn't understand that. Please try again.";
       
-      // replace the pending message
       setMessages((prev) => prev.map((m) => (m.id === pendingId ? { ...m, text: reply, pending: false, time: new Date().toISOString() } : m)));
     } catch (e) {
-      console.error('Gemini API error:', e);
-      // Fallback to a simple response system
+      console.error('OpenAI API error:', e);
       const fallbackResponse = getFallbackResponse(msgText);
       setMessages((prev) => prev.map((m) => (m.id === pendingId ? { ...m, text: fallbackResponse, pending: false, time: new Date().toISOString() } : m)));
     } finally {
@@ -231,12 +119,11 @@ const ChatBot: React.FC = () => {
     }
   };
 
-  // Fallback response system when API is not available
   const getFallbackResponse = (userMessage: string) => {
     const message = userMessage.toLowerCase();
     
     if (message.includes('hello') || message.includes('hi') || message.includes('hey')) {
-      return 'Hello! Welcome to Shri krishna steel works. How can I help you today?';
+      return 'Hello! Welcome to Shri Krishna Steel Works. How can I help you today?';
     }
     
     if (message.includes('product') || message.includes('steel')) {
@@ -278,27 +165,12 @@ const ChatBot: React.FC = () => {
     localStorage.removeItem(CHAT_HISTORY_KEY);
   };
 
-  // panel positioning: ensure panel stays within viewport
-  const panelWidth = 320;
-  const panelHeight = 400;
-  const computePanelStyle = () => {
-    // Calculate position relative to viewport, not page
-    const viewportLeft = Math.max(8, Math.min(window.innerWidth - panelWidth - 8, pos.x - panelWidth + 28));
-    const viewportTop = Math.max(8, Math.min(window.innerHeight - panelHeight - 8, pos.y - panelHeight + 28));
-    
-    return { 
-      left: viewportLeft, 
-      top: viewportTop,
-      position: 'fixed' as const
-    };
-  };
 
   // Close chat when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (open) {
         const target = event.target as Element;
-        // Check if click is outside the chat panel
         if (!target.closest('.chat-panel') && !target.closest('.chatbot-button')) {
           setOpen(false);
         }
@@ -312,74 +184,119 @@ const ChatBot: React.FC = () => {
   }, [open]);
 
   return (
-    <div>
-      {/* Floating button (draggable) - only show when chat is closed */}
-      {!open && isVisible && (
+    <div className="fixed bottom-6 right-6 z-50">
+      {/* Floating button - always visible */}
+      {!open && (
         <div
-          onMouseDown={onMouseDown}
-          onTouchStart={onTouchStart}
           className="chatbot-floating-button chatbot-button"
-          ref={floatingButtonRef}
         >
-          <div className="w-14 h-14 rounded-full bg-white border-2 border-primary flex items-center justify-center shadow-lg cursor-move relative overflow-hidden">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 border-2 border-white flex items-center justify-center shadow-xl cursor-pointer relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <img 
               src="/photos/logo.jpg" 
-              alt="Shri krishna steel works Logo" 
+              alt="Shri Krishna Steel Works Logo" 
               className="w-full h-full object-cover rounded-full pointer-events-none"
             />
             {/* Clickable overlay for opening chat */}
             <div 
               className="absolute inset-0 cursor-pointer"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!dragging.current) {
-                  setOpen(true);
-                }
-              }}
+              onClick={() => setOpen(true)}
             />
-            {/* small notification badge */}
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full ring-2 ring-white" />
+            {/* Notification badge */}
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full ring-2 ring-white animate-pulse" />
           </div>
         </div>
       )}
 
-      {/* Chat panel positioned relative to the icon */}
+      {/* Chat panel - positioned at bottom right */}
       {open && (
         <div 
           className="chatbot-panel" 
-          ref={panelRef}
         >
-          <div className="w-80 bg-background rounded-lg shadow-lg p-3 chat-panel">
-            <div className="flex items-center justify-between mb-2">
-              <div className="font-semibold">Shri krishna steel works AI</div>
-              <div className="flex items-center gap-2">
-                <div className="text-xs text-muted-foreground">{sending ? 'Typing...' : 'Online'}</div>
-                <button className="p-1 rounded hover:bg-muted" onClick={clearChat} title="Clear chat">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-                <button 
-                  className="p-1 rounded hover:bg-muted" 
-                  onClick={() => setOpen(false)} 
-                  title="Close chat"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+          <div className="w-96 bg-white rounded-xl shadow-2xl border border-gray-200 chat-panel mb-4">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">Shri Krishna Steel Works AI</div>
+                    <div className="text-xs opacity-90">{sending ? 'Typing...' : 'Online'}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    className="p-2 rounded-lg hover:bg-white/20 transition-colors" 
+                    onClick={clearChat} 
+                    title="Clear chat"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <button 
+                    className="p-2 rounded-lg hover:bg-white/20 transition-colors" 
+                    onClick={() => setOpen(false)} 
+                    title="Close chat"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div ref={messagesRef} className="h-56 overflow-auto mb-2 space-y-2">
+            {/* Messages */}
+            <div ref={messagesRef} className="h-80 overflow-auto p-4 space-y-3 bg-gray-50">
               {messages.map((m) => (
-                <div key={m.id} className={`p-2 rounded max-w-[85%] ${m.from === 'user' ? 'bg-primary text-white ml-auto' : 'bg-muted-foreground text-foreground'}`}>
-                  <div className="text-sm">{m.text}</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">{new Date(m.time).toLocaleString()}</div>
+                <div key={m.id} className={`flex gap-2 ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  {m.from === 'bot' && (
+                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-1">
+                      <Bot className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  <div className={`max-w-[80%] ${m.from === 'user' ? 'order-first' : ''}`}>
+                    <div className={`p-3 rounded-lg ${
+                      m.from === 'user' 
+                        ? 'bg-blue-500 text-white rounded-br-sm' 
+                        : 'bg-white text-gray-800 rounded-bl-sm border border-gray-200'
+                    }`}>
+                      <div className="text-sm whitespace-pre-wrap">{m.text}</div>
+                    </div>
+                    <div className={`text-xs text-gray-500 mt-1 ${m.from === 'user' ? 'text-right' : 'text-left'}`}>
+                      {new Date(m.time).toLocaleTimeString()}
+                    </div>
+                  </div>
+                  {m.from === 'user' && (
+                    <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0 mt-1">
+                      <User className="w-3 h-3 text-white" />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <Input value={text} onChange={(e) => setText((e.target as HTMLInputElement).value)} onKeyDown={onKeyDown} placeholder="Type a message" />
-              <Button onClick={sendMessage} disabled={sending}>{sending ? '...' : 'Send'}</Button>
+            {/* Input */}
+            <div className="p-4 bg-white border-t border-gray-200 rounded-b-xl">
+              <div className="flex gap-2">
+                <Input 
+                  value={text} 
+                  onChange={(e) => setText(e.target.value)} 
+                  onKeyDown={onKeyDown} 
+                  placeholder="Type your message..." 
+                  className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  disabled={sending}
+                />
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={sending || !text.trim()}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4"
+                >
+                  {sending ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
