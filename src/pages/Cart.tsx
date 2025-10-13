@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import PaymentQRModal from '@/components/PaymentQRModal';
+import { OrderService, calculateOrderTotal } from '@/lib/database';
+import { useToast } from '@/hooks/use-toast';
 
 interface CartItem {
   id: string;
@@ -28,8 +30,10 @@ interface CartItem {
 const Cart = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { cartItems, updateQuantity, removeFromCart, getCartTotal } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart } = useCart();
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const { toast } = useToast();
 
   const calculateTotal = () => {
     return getCartTotal();
@@ -44,6 +48,61 @@ const Cart = () => {
 
   const handleCheckout = () => {
     setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentComplete = async () => {
+    if (!user) {
+      toast({
+        title: 'Error',
+        description: 'Please login to complete your order',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsCreatingOrder(true);
+    try {
+      const orderData = {
+        userId: user.uid,
+        userEmail: user.email || '',
+        userName: user.displayName || user.email || 'Customer',
+        items: cartItems,
+        subtotal: calculateTotal(),
+        shipping: 500,
+        tax: calculateTotal() * 0.18,
+        total: calculateFinalTotal(),
+        status: 'pending' as const,
+        paymentStatus: 'paid' as const,
+        paymentMethod: 'upi' as const,
+        notes: 'Payment completed via UPI QR code'
+      };
+
+      const orderId = await OrderService.createOrder(orderData);
+      
+      toast({
+        title: 'Order Placed Successfully!',
+        description: `Your order #${orderId} has been placed and payment confirmed.`,
+      });
+
+      // Clear the cart after successful order
+      clearCart();
+      
+      // Close payment modal
+      setIsPaymentModalOpen(false);
+      
+      // Navigate to home page
+      navigate('/', { replace: true });
+      
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({
+        title: 'Order Failed',
+        description: 'There was an error processing your order. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCreatingOrder(false);
+    }
   };
 
   if (!user) {
@@ -241,6 +300,8 @@ const Cart = () => {
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
         totalAmount={calculateFinalTotal()}
+        onPaymentComplete={handlePaymentComplete}
+        isLoading={isCreatingOrder}
       />
     </div>
   );

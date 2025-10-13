@@ -9,9 +9,11 @@ interface PaymentQRModalProps {
   isOpen: boolean;
   onClose: () => void;
   totalAmount: number;
+  onPaymentComplete?: () => void;
+  isLoading?: boolean;
 }
 
-const PaymentQRModal: React.FC<PaymentQRModalProps> = ({ isOpen, onClose, totalAmount }) => {
+const PaymentQRModal: React.FC<PaymentQRModalProps> = ({ isOpen, onClose, totalAmount, onPaymentComplete, isLoading = false }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto">
@@ -106,13 +108,17 @@ const PaymentQRModal: React.FC<PaymentQRModalProps> = ({ isOpen, onClose, totalA
             </Button>
             <Button
               onClick={() => {
-                // Here you can add payment confirmation logic
-                alert('Payment completed! Thank you for your order.');
-                onClose();
+                if (onPaymentComplete) {
+                  onPaymentComplete();
+                } else {
+                  alert('Payment completed! Thank you for your order.');
+                  onClose();
+                }
               }}
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={isLoading}
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50"
             >
-              Payment Done
+              {isLoading ? 'Processing...' : 'Payment Done'}
             </Button>
           </div>
         </div>
