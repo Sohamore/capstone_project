@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { ShoppingCart, Trash2, Plus, Minus, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import PaymentQRModal from '@/components/PaymentQRModal';
 
 interface CartItem {
   id: string;
@@ -28,9 +29,21 @@ const Cart = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cartItems, updateQuantity, removeFromCart, getCartTotal } = useCart();
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const calculateTotal = () => {
     return getCartTotal();
+  };
+
+  const calculateFinalTotal = () => {
+    const subtotal = calculateTotal();
+    const shipping = 500;
+    const tax = subtotal * 0.18;
+    return subtotal + shipping + tax;
+  };
+
+  const handleCheckout = () => {
+    setIsPaymentModalOpen(true);
   };
 
   if (!user) {
@@ -201,7 +214,11 @@ const Cart = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full hero-gradient" size="lg">
+                  <Button 
+                    className="w-full hero-gradient" 
+                    size="lg"
+                    onClick={handleCheckout}
+                  >
                     Proceed to Checkout
                   </Button>
                   
@@ -218,6 +235,13 @@ const Cart = () => {
           </div>
         )}
       </div>
+
+      {/* Payment QR Modal */}
+      <PaymentQRModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        totalAmount={calculateFinalTotal()}
+      />
     </div>
   );
 };
