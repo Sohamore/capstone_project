@@ -174,6 +174,23 @@ export class ContactService {
 
   // Submit a contact form
   static async submitContactForm(contactData: Omit<ContactForm, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    // Try saving to local backend first (backend/contact_service)
+    try {
+      const res = await fetch('http://localhost:5004/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactData),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return json.id;
+      }
+      console.warn('Contact backend returned non-OK, falling back to Firestore');
+    } catch (err) {
+      console.warn('Contact backend not reachable, falling back to Firestore', err);
+    }
+
+    // Fallback: save to Firestore (existing behavior)
     try {
       const contactWithTimestamp = {
         ...contactData,
@@ -183,10 +200,10 @@ export class ContactService {
       };
 
       const docRef = await addDoc(collection(db, this.COLLECTION_NAME), contactWithTimestamp);
-      console.log('Contact form submitted with ID:', docRef.id);
+      console.log('Contact form submitted to Firestore with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Error submitting contact form:', error);
+      console.error('Error submitting contact form to Firestore:', error);
       throw new Error('Failed to submit contact form');
     }
   }
